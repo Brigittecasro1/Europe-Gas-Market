@@ -1,0 +1,157 @@
+library(dplyr)
+library(Hmisc)
+library(ggplot2)
+
+library(readr)
+ConProEU <- read_csv("ConProEU.csv", col_types = cols(GCAustria = col_number(), 
+                                                      +     GCBelgium = col_number(), GCBulgaria = col_number(), 
+                                                      +     GCCroatia = col_number(), `GCCzech Republic` = col_number(), 
+                                                      +     GCDenmark = col_number(), GCEstonia = col_number(), 
+                                                      +     GCFinland = col_number(), GCFrance = col_number(), 
+                                                      +     GCGermany = col_number(), GCGreece = col_number(), 
+                                                      +     GCHungary = col_number(), GCIreland = col_number(), 
+                                                      +     GCItaly = col_number(), GCLatvia = col_number(), 
+                                                      +     GCLithuania = col_number(), GCLuxembourg = col_number(), 
+                                                      +     GCNetherlands = col_number(), `GCNorth Macedonia` = col_number(), 
+                                                      +     GCNorway = col_number(), `GCOther Europe` = col_number(), 
+                                                      +     GCPoland = col_number(), GCPortugal = col_number(), 
+                                                      +     GCRomania = col_number(), GCSlovakia = col_number(), 
+                                                      +     GCSlovenia = col_number(), GCSpain = col_number(), 
+                                                      +     GCSweden = col_number(), GCSwitzerland = col_number(), 
+                                                      +     GCTotalEurope = col_number(), GCTurkey = col_number(), 
+                                                      +     GCUK = col_number(), GCUkraine = col_number(), 
+                                                      +     GPDenmark = col_number(), GPGermany = col_number(), 
+                                                      +     GPItaly = col_number(), GPNetherlands = col_number(), 
+                                                      +     GPNorway = col_number(), GPOtherEurope = col_number(), 
+                                                      +     GPPoland = col_number(), GPRomania = col_number(), 
+                                                      +     GPTotalEurope = col_number(), GPUK = col_number(), 
+                                                      +     GPUkraine = col_number(), GRTotalEurope = col_number(), 
+                                                      +     IpriceGerman = col_number(), IpriceUK = col_number()))
+View(ConProEU)
+
+##heatmap
+install.packages("corrplot")
+library(corrplot)
+rcorr
+MATRIX1<-corrplot(ConProEU)
+corrplot(ConProEU, method="color")
+
+install.packages("corrplot")
+library(corrplot)
+library(Hmisc)
+matriz <-rcorr(as.matrix(ConProEU), type=c("spearman"))
+mydata.cor<-matriz$r
+
+MATRIZR<-data.frame(matriz$r)
+write.csv(MATRIZR, file= "crrelaciCP")
+getwd()
+
+install.packages("corrplot")
+library(corrplot)
+corrplot(mydata.cor)
+
+corrplot(mydata.cor,method = "number")
+
+#MODELO CON imprt exprt
+library(readr)
+ExpImpEU <- read_csv("ExpImpEU.csv")
+View(ExpImpEU)
+
+#tratamiet NA
+table(is.na(ExpImpEU)) 
+data<- na.exclude(ExpImpEU)
+
+
+library(corrplot)
+library(Hmisc)
+matriz2 <-rcorr(as.matrix(data), type=c("spearman"))
+mydata.cor<-matriz2$r
+library(corrplot)
+corrplot(mydata.cor)
+
+
+##MODELO CON GDPEU
+library(readxl)
+GDPEU <- read_excel("GDPEU.xlsx")
+View(GDPEU)
+
+#tratamiet NA
+table(is.na(GDPEU)) 
+data<- na.omit(GDPEU)
+
+library(corrplot)
+library(Hmisc)
+matriz3 <-rcorr(as.matrix(data), type=c("spearman"))
+mydata.cor<-matriz3$r
+library(corrplot)
+corrplot(mydata.cor)
+
+MATRIZ3R<-data.frame(matriz3$r)
+write.csv(MATRIZ3R, file= "crrelgdp")
+getwd()
+
+
+##todas las variables represetativas
+library(readxl)
+allreprevar <- read_excel("allreprevar.xlsx", 
+                          +     na = "0.00000000")
+
+View(allreprevar)
+
+#tratamiet NA
+table(is.na(allreprevar)) 
+data<- na.omit(allreprevar)
+
+library(corrplot)
+library(Hmisc)
+matriz4 <-rcorr(as.matrix(data), type=c("spearman"))
+mydata.cor<-matriz4$r
+library(corrplot)
+corrplot(mydata.cor)
+
+
+##regresion lineal
+regresion= lm(data=allreprevar,IpriceGerman~.)
+summary(regresion)
+
+##CORRELACION ALEMANIA UK PRICE IMPORT
+corraleuk = lm(IpriceUK~ IpriceGerman, data = data)
+summary(corraleuk)
+
+##MATRIZ DE CORRELACION
+library(corrplot)
+library(Hmisc)
+matriz3 <-rcorr(as.matrix(data), type=c("spearman"))
+mydata.cor<-matriz3$r
+library(corrplot)
+corrplot(mydata.cor)
+MATRIZall<-data.frame(mydata.cor)
+write.csv(MATRIZall, file= "crrallvarrepr")
+getwd()
+setwd("C:/Users/karen/Documents/THESISECONOMIA/Simulation R/Europe Anual")
+
+
+##refinamiento de variables representativas BACKWARD
+library(dplyr)
+data1 <- select(allreprevar, -GCGermany, -IpriceUK, -GDPGreece, -GDPIreland, -GDPUK, -GDPSpain)
+summary(data1)
+head(data1)
+
+regresion1= lm(data=data1,IpriceGerman~.)
+summary(regresion1)
+
+##refinamiento de variables representativas BACKWARD
+library(dplyr)
+data2 <- select(data1, -`GCNorth Macedonia`, -LNGISpain, -GDPPortugal)
+summary(data2)
+head(data2)
+
+regresion2= lm(data=data2,IpriceGerman~.)
+summary(regresion2)
+
+##refinamiento de variables representativas FORWARD
+regresion3= lm(data=data2,IpriceGerman~GPNorway + GCPoland + GCSpain + GCSwitzerland + GCTurkey + pipeotherCIS+ LNGIOtherEU+ LNGENorway+ GDPItaly)
+summary(regresion3)
+
+regresion4= lm(data=data2,IpriceGerman~GPNorway + GCPoland + GCSpain + GCSwitzerland + GCTurkey)
+summary(regresion4)
